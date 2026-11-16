@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HTML5 Tetris</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="game-container">
+    <header class="game-header">
+      <h1 class="game-title">TETRIS</h1>
+      <div class="header-status">
+        <span id="sound-indicator" title="Toggle Sound (Press M)">🔊 Sound ON</span>
+      </div>
+    </header>
+
+    <div class="game-layout">
+      <!-- Left Sidebar: Hold & Level/Lines -->
+      <aside class="sidebar sidebar-left">
+        <div class="panel hold-panel">
+          <h2 class="panel-title">HOLD</h2>
+          <div class="canvas-wrapper">
+            <canvas id="hold-canvas" width="120" height="120"></canvas>
+          </div>
+          <div class="panel-hint">Key: [C] / [Shift]</div>
+        </div>
+
+        <div class="panel stats-panel">
+          <div class="stat-box">
+            <div class="stat-label">SCORE</div>
+            <div class="stat-value" id="score-display">0</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">HIGH SCORE</div>
+            <div class="stat-value highlight" id="high-score-display">0</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">LEVEL</div>
+            <div class="stat-value" id="level-display">1</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">LINES</div>
+            <div class="stat-value" id="lines-display">0</div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Center: Main Board -->
+      <main class="board-area">
+        <div class="canvas-container">
+          <canvas id="tetris-canvas" width="300" height="600"></canvas>
+          
+          <!-- Start / Game Over / Pause Overlays -->
+          <div id="overlay" class="overlay">
+            <div class="overlay-card" id="start-screen">
+              <h2>READY TO PLAY?</h2>
+              <p>Classic Tetris with modern controls, sound effects & smooth rotation</p>
+              <button id="btn-start" class="glow-button">START GAME</button>
+            </div>
+
+            <div class="overlay-card hidden" id="pause-screen">
+              <h2>PAUSED</h2>
+              <p>Press [P] or [Esc] to resume</p>
+              <button id="btn-resume" class="glow-button">RESUME</button>
+            </div>
+
+            <div class="overlay-card hidden" id="gameover-screen">
+              <h2>GAME OVER</h2>
+              <div class="final-score-box">
+                <div>Final Score: <span id="final-score">0</span></div>
+                <div>Lines Cleared: <span id="final-lines">0</span></div>
+              </div>
+              <button id="btn-restart" class="glow-button">PLAY AGAIN</button>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- Right Sidebar: Next Queue & Quick Controls -->
+      <aside class="sidebar sidebar-right">
+        <div class="panel next-panel">
+          <h2 class="panel-title">NEXT</h2>
+          <div class="canvas-wrapper">
+            <canvas id="next-canvas" width="120" height="280"></canvas>
+          </div>
+        </div>
+
+        <div class="panel controls-guide">
+          <h2 class="panel-title">CONTROLS</h2>
+          <ul class="controls-list">
+            <li><kbd>←</kbd> <kbd>→</kbd> / <kbd>A</kbd> <kbd>D</kbd> : Move</li>
+            <li><kbd>↑</kbd> / <kbd>W</kbd> : Rotate CW</li>
+            <li><kbd>Z</kbd> : Rotate CCW</li>
+            <li><kbd>↓</kbd> / <kbd>S</kbd> : Soft Drop</li>
+            <li><kbd>Space</kbd> : Hard Drop</li>
+            <li><kbd>C</kbd> / <kbd>Shift</kbd> : Hold</li>
+            <li><kbd>P</kbd> / <kbd>Esc</kbd> : Pause</li>
+            <li><kbd>M</kbd> : Mute Sound</li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+
+    <!-- On-screen Mobile/Casual Touch Controls -->
+    <div class="touch-controls">
+      <button class="touch-btn" id="t-left" aria-label="Left">◀</button>
+      <button class="touch-btn" id="t-rotate-ccw" aria-label="Rotate CCW">↺</button>
+      <button class="touch-btn" id="t-rotate-cw" aria-label="Rotate CW">↻</button>
+      <button class="touch-btn" id="t-right" aria-label="Right">▶</button>
+      <button class="touch-btn" id="t-down" aria-label="Soft Drop">▼</button>
+      <button class="touch-btn" id="t-hard-drop" aria-label="Hard Drop">⤓</button>
+      <button class="touch-btn" id="t-hold" aria-label="Hold">HOLD</button>
+    </div>
+
+    <footer class="game-footer">
+      <button id="btn-sound-toggle" class="btn-text">🔊 Sound: ON</button>
+      <button id="btn-ghost-toggle" class="btn-text">👻 Ghost: ON</button>
+      <button id="btn-pause-toggle" class="btn-text">⏸ Pause</button>
+      <button id="btn-reset" class="btn-text">↺ Reset</button>
+    </footer>
+  </div>
+
+  <script src="tetris.js"></script>
+</body>
+</html>
