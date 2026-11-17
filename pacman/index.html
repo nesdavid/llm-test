@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>HTML5 PAC-MAN Arcade</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="game-container">
+    <!-- Header Marquee -->
+    <header class="game-header">
+      <div class="logo-area">
+        <div class="pac-logo-icon" aria-hidden="true"></div>
+        <h1 class="game-title">PAC-MAN</h1>
+      </div>
+      <div class="header-controls">
+        <button id="btn-sound" class="icon-button" title="Toggle Sound (M)">
+          <span id="sound-icon">🔊</span> <span id="sound-text">SOUND</span>
+        </button>
+        <button id="btn-pause" class="icon-button" title="Pause Game (P)">
+          <span id="pause-icon">⏸</span> <span id="pause-text">PAUSE</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Scoreboard -->
+    <section class="scoreboard" aria-label="Score Board">
+      <div class="score-box">
+        <div class="score-label">1UP SCORE</div>
+        <div class="score-val" id="score-display">00</div>
+      </div>
+      <div class="score-box">
+        <div class="score-label">HIGH SCORE</div>
+        <div class="score-val highlight" id="high-score-display">00</div>
+      </div>
+      <div class="score-box">
+        <div class="score-label">ROUND</div>
+        <div class="score-val cyan" id="level-display">1</div>
+      </div>
+    </section>
+
+    <!-- Arcade Screen with Canvas & Overlays -->
+    <main class="screen-wrapper">
+      <canvas id="gameCanvas" width="560" height="620"></canvas>
+
+      <!-- Interactive Modal Overlays -->
+      <div id="game-overlay" class="overlay">
+        <!-- Start Game Card -->
+        <div id="start-modal" class="overlay-modal active">
+          <h2 class="modal-title">READY!</h2>
+          <p class="modal-desc">Eat all dots & power energizers while avoiding the ghosts!</p>
+
+          <div class="ghost-roster">
+            <div class="roster-item">
+              <div class="ghost-preview">
+                <span class="ghost-mini-sprite blinky"></span>
+                <span class="ghost-name">BLINKY</span>
+              </div>
+              <span class="ghost-nickname">"SHADOW" (CHASER)</span>
+            </div>
+            <div class="roster-item">
+              <div class="ghost-preview">
+                <span class="ghost-mini-sprite pinky"></span>
+                <span class="ghost-name">PINKY</span>
+              </div>
+              <span class="ghost-nickname">"SPEEDY" (AMBUSHER)</span>
+            </div>
+            <div class="roster-item">
+              <div class="ghost-preview">
+                <span class="ghost-mini-sprite inky"></span>
+                <span class="ghost-name">INKY</span>
+              </div>
+              <span class="ghost-nickname">"BASHFUL" (FLANKER)</span>
+            </div>
+            <div class="roster-item">
+              <div class="ghost-preview">
+                <span class="ghost-mini-sprite clyde"></span>
+                <span class="ghost-name">CLYDE</span>
+              </div>
+              <span class="ghost-nickname">"POKEY" (COWARD)</span>
+            </div>
+          </div>
+
+          <button id="btn-start" class="glow-btn">START GAME</button>
+        </div>
+
+        <!-- Pause Card -->
+        <div id="pause-modal" class="overlay-modal hidden">
+          <h2 class="modal-title">GAME PAUSED</h2>
+          <p class="modal-desc">Press [P] or click RESUME to return to the maze.</p>
+          <button id="btn-resume" class="glow-btn">RESUME</button>
+        </div>
+
+        <!-- Game Over Card -->
+        <div id="gameover-modal" class="overlay-modal hidden">
+          <h2 class="modal-title danger">GAME OVER</h2>
+          <div class="final-stats">
+            <div class="stat-row">
+              <span>FINAL SCORE:</span>
+              <span id="gameover-score" class="highlight">0</span>
+            </div>
+            <div class="stat-row">
+              <span>HIGH SCORE:</span>
+              <span id="gameover-highscore">0</span>
+            </div>
+            <div class="stat-row">
+              <span>ROUNDS COMPLETED:</span>
+              <span id="gameover-level">1</span>
+            </div>
+          </div>
+          <button id="btn-restart" class="glow-btn">PLAY AGAIN</button>
+        </div>
+
+        <!-- Level Clear Card -->
+        <div id="clear-modal" class="overlay-modal hidden">
+          <h2 class="modal-title success">ROUND CLEAR!</h2>
+          <p class="modal-desc">Awesome job! Ready for faster ghosts?</p>
+          <div class="final-stats">
+            <div class="stat-row">
+              <span>BONUS:</span>
+              <span class="cyan">+1000 PTS</span>
+            </div>
+          </div>
+          <button id="btn-next-level" class="glow-btn">NEXT ROUND</button>
+        </div>
+      </div>
+
+      <!-- Bottom Screen Status Bar -->
+      <footer class="screen-status-bar">
+        <div class="lives-container" aria-label="Remaining Lives">
+          <span class="lives-label">LIVES:</span>
+          <div id="lives-display" class="lives-icons">
+            <span class="life-icon"></span>
+            <span class="life-icon"></span>
+          </div>
+        </div>
+        <div class="fruit-container" aria-label="Bonus Fruits">
+          <span class="fruit-label">FRUIT:</span>
+          <div id="fruit-display" class="fruit-icon">🍒</div>
+        </div>
+      </footer>
+    </main>
+
+    <!-- Mobile Virtual D-Pad -->
+    <div class="mobile-controls" id="touch-controls">
+      <div class="dpad-row">
+        <button class="dpad-btn" id="dpad-up" aria-label="Up">▲</button>
+      </div>
+      <div class="dpad-row">
+        <button class="dpad-btn" id="dpad-left" aria-label="Left">◀</button>
+        <button class="dpad-btn" id="dpad-down" aria-label="Down">▼</button>
+        <button class="dpad-btn" id="dpad-right" aria-label="Right">▶</button>
+      </div>
+    </div>
+
+    <!-- Quick Keyboard & Controls Guide -->
+    <nav class="controls-card" aria-label="Keyboard Shortcuts">
+      <div class="guide-item"><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> / <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> Move</div>
+      <div class="guide-item"><kbd>P</kbd> / <kbd>Space</kbd> Pause</div>
+      <div class="guide-item"><kbd>M</kbd> Mute</div>
+      <div class="guide-item"><kbd>R</kbd> Restart</div>
+    </nav>
+  </div>
+
+  <script src="screens.js"></script>
+  <script src="pacman.js"></script>
+</body>
+</html>
