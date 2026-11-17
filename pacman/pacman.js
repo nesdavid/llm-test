@@ -14,6 +14,9 @@
   const GRID_COLS = 28;
   const GRID_ROWS = 31;
   const TILE_SIZE = 20; // 560 x 620 px canvas
+  const PACMAN_BASE_SPEED = 10.5; // tiles per second
+  const PACMAN_EAT_SLOWDOWN = 0.75; // speed multiplier while eating a dot or energizer
+  const PACMAN_EAT_SLOWDOWN_DURATION = 0.10; // seconds of slowdown after eating
 
   // Tile Types
   const TILE_EMPTY = 0;
@@ -439,7 +442,8 @@
       this.dir = DIR_LEFT;
       this.facingDir = DIR_LEFT;
       this.nextDir = null;
-      this.speed = 10.5; // tiles per second
+      this.speed = PACMAN_BASE_SPEED;
+      this.eatingSlowdownTimer = 0;
       this.mouthPhase = 0;
       this.isDying = false;
       this.deathProgress = 0; // 0 to 1
@@ -449,7 +453,17 @@
       this.nextDir = dir;
     }
 
+    slowDownAfterEating() {
+      this.eatingSlowdownTimer = PACMAN_EAT_SLOWDOWN_DURATION;
+      this.speed = PACMAN_BASE_SPEED * PACMAN_EAT_SLOWDOWN;
+    }
+
     update(dt, maze) {
+      this.eatingSlowdownTimer = Math.max(0, this.eatingSlowdownTimer - dt);
+      this.speed = this.eatingSlowdownTimer > 0
+        ? PACMAN_BASE_SPEED * PACMAN_EAT_SLOWDOWN
+        : PACMAN_BASE_SPEED;
+
       if (this.isDying) {
         this.deathProgress += dt * 0.9;
         return;
@@ -1354,6 +1368,7 @@
       const eatenTile = this.maze.eat(pacTileCol, pacTileRow);
 
       if (eatenTile === TILE_DOT) {
+        this.pacman.slowDownAfterEating();
         this.addScore(10);
         this.sound.playChomp();
 
@@ -1363,6 +1378,7 @@
         }
 
       } else if (eatenTile === TILE_ENERGIZER) {
+        this.pacman.slowDownAfterEating();
         this.addScore(50);
         this.sound.playPowerPellet();
 
@@ -1490,6 +1506,8 @@
     GRID_COLS,
     GRID_ROWS,
     TILE_SIZE,
+    PACMAN_BASE_SPEED,
+    PACMAN_EAT_SLOWDOWN,
     TILE_EMPTY,
     TILE_WALL,
     TILE_DOT,

@@ -620,7 +620,7 @@
     // =========================================================================
 
     describe("4. Scoring, Combos & Life Logic", () => {
-      const { Game, STATE_PLAYING, STATE_READY } = window.PacmanEngine;
+      const { Game, STATE_PLAYING, STATE_READY, PACMAN_BASE_SPEED, PACMAN_EAT_SLOWDOWN, DIR_NONE } = window.PacmanEngine;
 
       test("Game initializes with clean starting score, 3 lives, level 1", () => {
         const game = new Game({ headless: true });
@@ -639,6 +639,34 @@
 
         game.addScore(50);
         assert.strictEqual(game.score, 60, "Score should be 60 after eating energizer");
+      });
+
+      test("Eating dots and energizers triggers a visible slowdown that recovers after the bite", () => {
+        const game = new Game({ headless: true });
+        game.startNewGame();
+        game.state = STATE_PLAYING;
+        game.pacman.x = 1;
+        game.pacman.y = 1;
+        game.pacman.dir = DIR_NONE;
+
+        game.update(0.01); // Regular dot at (1, 1)
+        assert.closeTo(game.pacman.speed, PACMAN_BASE_SPEED * PACMAN_EAT_SLOWDOWN, 0.0001);
+        game.update(0.01); // Stay on the now-empty tile during the bite slowdown
+        assert.closeTo(game.pacman.speed, PACMAN_BASE_SPEED * PACMAN_EAT_SLOWDOWN, 0.0001);
+        for (let i = 0; i < 20; i++) game.update(0.01);
+        assert.strictEqual(game.pacman.speed, PACMAN_BASE_SPEED);
+
+        game.pacman.x = 1;
+        game.pacman.y = 3; // Energizer at (1, 3)
+        game.update(0.01);
+        assert.closeTo(game.pacman.speed, PACMAN_BASE_SPEED * PACMAN_EAT_SLOWDOWN, 0.0001);
+        game.update(0.01); // Stay on the now-empty tile during the bite slowdown
+        assert.closeTo(game.pacman.speed, PACMAN_BASE_SPEED * PACMAN_EAT_SLOWDOWN, 0.0001);
+        for (let i = 0; i < 20; i++) game.update(0.01);
+        assert.strictEqual(game.pacman.speed, PACMAN_BASE_SPEED);
+
+        game.resetRound(false);
+        assert.strictEqual(game.pacman.speed, PACMAN_BASE_SPEED, "Resetting the round restores configured base speed");
       });
 
       test("Ghost eating combo multiplier doubles with each ghost: 200 -> 400 -> 800 -> 1600", () => {
