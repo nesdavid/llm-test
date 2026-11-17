@@ -104,7 +104,13 @@
   class SoundController {
     constructor() {
       this.ctx = null;
-      this.muted = localStorage.getItem('pacman_muted') === 'true';
+      let mutedPref = false;
+      try {
+        if (typeof localStorage !== 'undefined') {
+          mutedPref = localStorage.getItem('pacman_muted') === 'true';
+        }
+      } catch (e) {}
+      this.muted = mutedPref;
       this.initialized = false;
       this.chompPhase = 0;
     }
@@ -112,9 +118,13 @@
     init() {
       if (this.initialized) return;
       try {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        this.ctx = new AudioCtx();
-        this.initialized = true;
+        if (typeof window !== 'undefined') {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (AudioCtx) {
+            this.ctx = new AudioCtx();
+            this.initialized = true;
+          }
+        }
       } catch (e) {
         console.warn('AudioContext not supported on this browser.', e);
       }
@@ -128,7 +138,11 @@
 
     toggleMute() {
       this.muted = !this.muted;
-      localStorage.setItem('pacman_muted', this.muted);
+      try {
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('pacman_muted', this.muted);
+        }
+      } catch (e) {}
       return !this.muted;
     }
 
@@ -954,10 +968,10 @@
   // =========================================================================
 
   class Game {
-    constructor() {
-      this.canvas = document.getElementById('gameCanvas');
-      this.ctx = this.canvas.getContext('2d');
-      this.sound = new SoundController();
+    constructor(options = {}) {
+      this.canvas = options.canvas || (typeof document !== 'undefined' ? document.getElementById('gameCanvas') : null);
+      this.ctx = options.ctx || (this.canvas && this.canvas.getContext ? this.canvas.getContext('2d') : null);
+      this.sound = options.sound || new SoundController();
 
       // Core Game Objects
       this.maze = new Maze();
@@ -976,7 +990,13 @@
       // Game States & Variables
       this.state = STATE_START;
       this.score = 0;
-      this.highScore = parseInt(localStorage.getItem('pacman_highscore') || '0', 10);
+      let savedHighScore = '0';
+      try {
+        if (typeof localStorage !== 'undefined') {
+          savedHighScore = localStorage.getItem('pacman_highscore') || '0';
+        }
+      } catch (e) {}
+      this.highScore = parseInt(savedHighScore, 10);
       this.level = 1;
       this.lives = 3;
       this.extraLifeAwarded = false;
@@ -1003,130 +1023,142 @@
       ];
 
       // Screen & UI Manager (from screens.js)
-      this.screenManager = new ScreenManager();
+      if (options.screenManager !== undefined) {
+        this.screenManager = options.screenManager;
+      } else {
+        this.screenManager = (typeof ScreenManager !== 'undefined') ? new ScreenManager() : null;
+      }
 
       this.lastTime = 0;
 
-      this.initEvents();
-      this.updateHUD();
-      this.showModal('start');
+      if (!options.headless) {
+        this.initEvents();
+        this.updateHUD();
+        this.showModal('start');
+      }
     }
 
     initEvents() {
       // 1. Wire ScreenManager Callbacks
-      this.screenManager.onStart = () => {
-        this.sound.init();
-        this.startNewGame();
-      };
+      if (this.screenManager) {
+        this.screenManager.onStart = () => {
+          this.sound.init();
+          this.startNewGame();
+        };
 
-      this.screenManager.onResume = () => {
-        this.sound.init();
-        this.togglePause();
-      };
+        this.screenManager.onResume = () => {
+          this.sound.init();
+          this.togglePause();
+        };
 
-      this.screenManager.onRestart = () => {
-        this.sound.init();
-        this.startNewGame();
-      };
+        this.screenManager.onRestart = () => {
+          this.sound.init();
+          this.startNewGame();
+        };
 
-      this.screenManager.onNextLevel = () => {
-        this.sound.init();
-        this.advanceLevel();
-      };
+        this.screenManager.onNextLevel = () => {
+          this.sound.init();
+          this.advanceLevel();
+        };
 
-      this.screenManager.onToggleSound = () => {
-        this.sound.init();
-        this.toggleSound();
-      };
+        this.screenManager.onToggleSound = () => {
+          this.sound.init();
+          this.toggleSound();
+        };
 
-      this.screenManager.onTogglePause = () => {
-        this.sound.init();
-        this.togglePause();
-      };
+        this.screenManager.onTogglePause = () => {
+          this.sound.init();
+          this.togglePause();
+        };
 
-      this.screenManager.onDirectionInput = (dirName) => {
-        this.sound.init();
-        if (dirName === 'UP') this.handleDirectionInput(DIR_UP);
-        else if (dirName === 'DOWN') this.handleDirectionInput(DIR_DOWN);
-        else if (dirName === 'LEFT') this.handleDirectionInput(DIR_LEFT);
-        else if (dirName === 'RIGHT') this.handleDirectionInput(DIR_RIGHT);
-      };
+        this.screenManager.onDirectionInput = (dirName) => {
+          this.sound.init();
+          if (dirName === 'UP') this.handleDirectionInput(DIR_UP);
+          else if (dirName === 'DOWN') this.handleDirectionInput(DIR_DOWN);
+          else if (dirName === 'LEFT') this.handleDirectionInput(DIR_LEFT);
+          else if (dirName === 'RIGHT') this.handleDirectionInput(DIR_RIGHT);
+        };
+      }
 
       // 2. Keyboard Controls
-      window.addEventListener('keydown', (e) => {
-        this.sound.init();
+      if (typeof window !== 'undefined') {
+        window.addEventListener('keydown', (e) => {
+          this.sound.init();
 
-        switch (e.key) {
-          case 'ArrowUp':
-          case 'w':
-          case 'W':
-            e.preventDefault();
-            this.handleDirectionInput(DIR_UP);
-            break;
-          case 'ArrowDown':
-          case 's':
-          case 'S':
-            e.preventDefault();
-            this.handleDirectionInput(DIR_DOWN);
-            break;
-          case 'ArrowLeft':
-          case 'a':
-          case 'A':
-            e.preventDefault();
-            this.handleDirectionInput(DIR_LEFT);
-            break;
-          case 'ArrowRight':
-          case 'd':
-          case 'D':
-            e.preventDefault();
-            this.handleDirectionInput(DIR_RIGHT);
-            break;
-          case 'p':
-          case 'P':
-          case ' ':
-            e.preventDefault();
-            this.togglePause();
-            break;
-          case 'm':
-          case 'M':
-            e.preventDefault();
-            this.toggleSound();
-            break;
-          case 'r':
-          case 'R':
-            e.preventDefault();
-            this.restartGame();
-            break;
-        }
-      });
+          switch (e.key) {
+            case 'ArrowUp':
+            case 'w':
+            case 'W':
+              e.preventDefault();
+              this.handleDirectionInput(DIR_UP);
+              break;
+            case 'ArrowDown':
+            case 's':
+            case 'S':
+              e.preventDefault();
+              this.handleDirectionInput(DIR_DOWN);
+              break;
+            case 'ArrowLeft':
+            case 'a':
+            case 'A':
+              e.preventDefault();
+              this.handleDirectionInput(DIR_LEFT);
+              break;
+            case 'ArrowRight':
+            case 'd':
+            case 'D':
+              e.preventDefault();
+              this.handleDirectionInput(DIR_RIGHT);
+              break;
+            case 'p':
+            case 'P':
+            case ' ':
+              e.preventDefault();
+              this.togglePause();
+              break;
+            case 'm':
+            case 'M':
+              e.preventDefault();
+              this.toggleSound();
+              break;
+            case 'r':
+            case 'R':
+              e.preventDefault();
+              this.restartGame();
+              break;
+          }
+        });
+      }
 
       // 3. Touch Swipes on Canvas
-      let touchStartX = 0;
-      let touchStartY = 0;
+      if (this.canvas) {
+        let touchStartX = 0;
+        let touchStartY = 0;
 
-      this.canvas.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        this.sound.init();
-        if (e.touches.length > 0) {
-          touchStartX = e.touches[0].clientX;
-          touchStartY = e.touches[0].clientY;
-        }
-      }, { passive: false });
+        this.canvas.addEventListener('touchstart', (e) => {
+          e.preventDefault();
+          this.sound.init();
+          if (e.touches.length > 0) {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+          }
+        }, { passive: false });
 
-      this.canvas.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        if (e.changedTouches.length > 0) {
-          const dx = e.changedTouches[0].clientX - touchStartX;
-          const dy = e.changedTouches[0].clientY - touchStartY;
-          if (Math.hypot(dx, dy) > 20) {
-            if (Math.abs(dx) > Math.abs(dy)) {
-              this.handleDirectionInput(dx > 0 ? DIR_RIGHT : DIR_LEFT);
-            } else {
-              this.handleDirectionInput(dy > 0 ? DIR_DOWN : DIR_UP);
+        this.canvas.addEventListener('touchend', (e) => {
+          e.preventDefault();
+          if (e.changedTouches.length > 0) {
+            const dx = e.changedTouches[0].clientX - touchStartX;
+            const dy = e.changedTouches[0].clientY - touchStartY;
+            if (Math.hypot(dx, dy) > 20) {
+              if (Math.abs(dx) > Math.abs(dy)) {
+                this.handleDirectionInput(dx > 0 ? DIR_RIGHT : DIR_LEFT);
+              } else {
+                this.handleDirectionInput(dy > 0 ? DIR_DOWN : DIR_UP);
+              }
             }
           }
-        }
-      }, { passive: false });
+        }, { passive: false });
+      }
     }
 
     handleDirectionInput(dir) {
@@ -1137,7 +1169,9 @@
 
     toggleSound() {
       const isUnmuted = this.sound.toggleMute();
-      this.screenManager.updateSoundButton(isUnmuted);
+      if (this.screenManager) {
+        this.screenManager.updateSoundButton(isUnmuted);
+      }
     }
 
     togglePause() {
@@ -1151,15 +1185,19 @@
     }
 
     showModal(modalName) {
-      this.screenManager.showScreen(modalName, {
-        score: this.score,
-        highScore: this.highScore,
-        level: this.level
-      });
+      if (this.screenManager) {
+        this.screenManager.showScreen(modalName, {
+          score: this.score,
+          highScore: this.highScore,
+          level: this.level
+        });
+      }
     }
 
     hideModals() {
-      this.screenManager.hideAllScreens();
+      if (this.screenManager) {
+        this.screenManager.hideAllScreens();
+      }
     }
 
     startNewGame() {
@@ -1204,6 +1242,7 @@
     }
 
     updateHUD() {
+      if (!this.screenManager) return;
       const currentFruit = FRUITS[Math.min(this.level - 1, FRUITS.length - 1)];
       this.screenManager.updateHUD(this.score, this.highScore, this.level, this.lives, currentFruit);
     }
@@ -1212,7 +1251,11 @@
       this.score += points;
       if (this.score > this.highScore) {
         this.highScore = this.score;
-        localStorage.setItem('pacman_highscore', this.highScore.toString());
+        try {
+          if (typeof localStorage !== 'undefined') {
+            localStorage.setItem('pacman_highscore', this.highScore.toString());
+          }
+        } catch (e) {}
       }
 
       if (!this.extraLifeAwarded && this.score >= 10000) {
@@ -1384,6 +1427,7 @@
     }
 
     render() {
+      if (!this.ctx || !this.canvas) return;
       this.ctx.fillStyle = '#000000';
       this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
@@ -1419,21 +1463,89 @@
       this.update(dt);
       this.render();
 
-      requestAnimationFrame((t) => this.loop(t));
+      if (typeof requestAnimationFrame !== 'undefined') {
+        requestAnimationFrame((t) => this.loop(t));
+      }
     }
 
     start() {
-      requestAnimationFrame((t) => this.loop(t));
+      if (typeof requestAnimationFrame !== 'undefined') {
+        requestAnimationFrame((t) => this.loop(t));
+      }
     }
+  }
+
+  // =========================================================================
+  // EXPORT ENGINE MODULE
+  // =========================================================================
+
+  const PacmanEngine = {
+    // Constants
+    GRID_COLS,
+    GRID_ROWS,
+    TILE_SIZE,
+    TILE_EMPTY,
+    TILE_WALL,
+    TILE_DOT,
+    TILE_ENERGIZER,
+    TILE_GATE,
+    DIR_NONE,
+    DIR_UP,
+    DIR_DOWN,
+    DIR_LEFT,
+    DIR_RIGHT,
+    ALL_DIRS,
+    getOppositeDir,
+    STATE_START,
+    STATE_READY,
+    STATE_PLAYING,
+    STATE_PAUSED,
+    STATE_PACMAN_DYING,
+    STATE_GHOST_EATEN_FREEZE,
+    STATE_LEVEL_CLEAR,
+    STATE_GAME_OVER,
+    MAZE_TEMPLATE,
+    FRUITS,
+    GHOST_STATE_IN_HOUSE,
+    GHOST_STATE_LEAVING_HOUSE,
+    GHOST_STATE_SCATTER,
+    GHOST_STATE_CHASE,
+    GHOST_STATE_FRIGHTENED,
+    GHOST_STATE_EATEN,
+    GHOST_STATE_ENTERING_HOUSE,
+
+    // Classes
+    SoundController,
+    Maze,
+    Pacman,
+    Ghost,
+    Fruit,
+    FloatingScore,
+    Game
+  };
+
+  if (typeof window !== 'undefined') {
+    window.PacmanEngine = PacmanEngine;
+    window.PacmanMaze = Maze;
+    window.PacmanEntity = Pacman;
+    window.PacmanGhost = Ghost;
+    window.PacmanGame = Game;
+  }
+
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = PacmanEngine;
   }
 
   // =========================================================================
   // INITIALIZE ON DOM LOAD
   // =========================================================================
 
-  window.addEventListener('DOMContentLoaded', () => {
-    const game = new Game();
-    game.start();
-  });
+  if (typeof window !== 'undefined') {
+    window.addEventListener('DOMContentLoaded', () => {
+      if (window.__PACMAN_TEST_MODE__ || !document.getElementById('gameCanvas')) return;
+      const game = new Game();
+      game.start();
+    });
+  }
 
 })();
