@@ -437,6 +437,7 @@
       this.x = 13.5;
       this.y = 23.0;
       this.dir = DIR_LEFT;
+      this.facingDir = DIR_LEFT;
       this.nextDir = null;
       this.speed = 10.5; // tiles per second
       this.mouthPhase = 0;
@@ -463,10 +464,12 @@
             this.x = centerC;
             this.y = centerR;
             this.dir = this.nextDir;
+            this.facingDir = this.nextDir;
             this.nextDir = null;
           }
         } else if (this.nextDir === getOppositeDir(this.dir)) {
           this.dir = this.nextDir;
+          this.facingDir = this.nextDir;
           this.nextDir = null;
         }
       }
@@ -486,6 +489,7 @@
             this.x = centerCol;
             this.y = centerRow;
             this.dir = this.nextDir;
+            this.facingDir = this.nextDir;
             this.nextDir = null;
           }
         }
@@ -493,6 +497,7 @@
 
       // 3. Move in current direction
       if (this.dir !== DIR_NONE) {
+        this.facingDir = this.dir;
         const moveDist = this.speed * dt;
         const nextX = this.x + this.dir.x * moveDist;
         const nextY = this.y + this.dir.y * moveDist;
@@ -556,7 +561,8 @@
         mouthAngle = (Math.sin(this.mouthPhase) * 0.5 + 0.5) * 0.32 * Math.PI + 0.04;
       }
 
-      const rot = this.dir.angle;
+      const facing = (this.dir !== DIR_NONE ? this.dir : this.facingDir) || DIR_LEFT;
+      const rot = facing.angle;
 
       ctx.fillStyle = '#ffff00';
       ctx.beginPath();

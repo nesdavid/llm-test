@@ -485,6 +485,48 @@
         pacman.update(0.01, maze);
         assert.closeTo(pacman.x, -0.5, 0.2, "Crossing right exit should warp to left tunnel");
       });
+
+      test("Pac-Man retains facing direction when stopped against a wall", () => {
+        const pacman = new Pacman();
+        const maze = new Maze();
+
+        // Moving UP into a wall (tile (1,0) is wall, (1,1) is open)
+        pacman.x = 1.0;
+        pacman.y = 1.05;
+        pacman.dir = DIR_UP;
+        pacman.facingDir = DIR_UP;
+        pacman.update(0.1, maze);
+        assert.strictEqual(pacman.dir, DIR_NONE, "Pac-Man must stop moving when hitting wall");
+        assert.strictEqual(pacman.facingDir, DIR_UP, "Pac-Man must keep facing UP after stopping");
+
+        // Moving RIGHT into a wall (tile (27,1) is outer wall, (26,1) is open)
+        pacman.x = 25.95;
+        pacman.y = 1.0;
+        pacman.dir = DIR_RIGHT;
+        pacman.facingDir = DIR_RIGHT;
+        pacman.update(0.1, maze);
+        assert.strictEqual(pacman.dir, DIR_NONE, "Pac-Man must stop moving when hitting wall");
+        assert.strictEqual(pacman.facingDir, DIR_RIGHT, "Pac-Man must keep facing RIGHT after stopping");
+
+        // Moving DOWN into a wall (row 7 col 2 is wall, row 6 col 2 is open)
+        pacman.x = 2.0;
+        pacman.y = 5.95;
+        pacman.dir = DIR_DOWN;
+        pacman.facingDir = DIR_DOWN;
+        assert.strictEqual(maze.isPassableForPacman(2, 7), false, "Tile (2,7) must be a wall");
+        pacman.update(0.1, maze);
+        assert.strictEqual(pacman.dir, DIR_NONE, "Pac-Man must stop moving when hitting wall");
+        assert.strictEqual(pacman.facingDir, DIR_DOWN, "Pac-Man must keep facing DOWN after stopping");
+
+        // Moving LEFT into outer wall (0,1)
+        pacman.x = 1.05;
+        pacman.y = 1.0;
+        pacman.dir = DIR_LEFT;
+        pacman.facingDir = DIR_LEFT;
+        pacman.update(0.1, maze);
+        assert.strictEqual(pacman.dir, DIR_NONE, "Pac-Man must stop moving when hitting wall");
+        assert.strictEqual(pacman.facingDir, DIR_LEFT, "Pac-Man must keep facing LEFT after stopping");
+      });
     });
 
     // =========================================================================
