@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Retro PAC-MAN - Automated Test Suite & Harness</title>
+  <style>
+    :root {
+      --bg: #0a0c16;
+      --card-bg: #121526;
+      --card-border: #232946;
+      --text-main: #e0e6ed;
+      --text-dim: #8b9bb4;
+      --accent-yellow: #ffff00;
+      --accent-blue: #00d2ff;
+      --accent-pink: #ff70a6;
+      --pass: #00f076;
+      --fail: #ff3366;
+      --font-mono: 'Consolas', 'Courier New', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      padding: 24px;
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    header {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 20px 24px;
+      margin-bottom: 24px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .title-group h1 {
+      font-family: var(--font-mono);
+      font-size: 1.5rem;
+      color: var(--accent-yellow);
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+
+    .title-group p {
+      color: var(--text-dim);
+      font-size: 0.9rem;
+    }
+
+    .stats-bar {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .stat-badge {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: 1px solid var(--card-border);
+      min-width: 80px;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-dim);
+    }
+
+    .stat-val {
+      font-family: var(--font-mono);
+      font-size: 1.4rem;
+      font-weight: bold;
+    }
+
+    .stat-pass { color: var(--pass); }
+    .stat-fail { color: var(--fail); }
+    .stat-total { color: var(--accent-blue); }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    button.btn-run {
+      background: var(--accent-yellow);
+      color: #000;
+      border: none;
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      font-weight: bold;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    button.btn-run:hover {
+      opacity: 0.9;
+    }
+
+    .suite {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      margin-bottom: 18px;
+      overflow: hidden;
+    }
+
+    .suite-header {
+      background: rgba(255, 255, 255, 0.02);
+      border-bottom: 1px solid var(--card-border);
+      padding: 12px 18px;
+      font-family: var(--font-mono);
+      font-size: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .suite-title {
+      color: var(--accent-blue);
+      font-weight: bold;
+    }
+
+    .test-list {
+      list-style: none;
+    }
+
+    .test-item {
+      padding: 10px 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .test-item:last-child {
+      border-bottom: none;
+    }
+
+    .test-main {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.92rem;
+    }
+
+    .test-status {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: bold;
+      padding: 2px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .status-pass {
+      background: rgba(0, 240, 118, 0.15);
+      color: var(--pass);
+      border: 1px solid var(--pass);
+    }
+
+    .status-fail {
+      background: rgba(255, 51, 102, 0.15);
+      color: var(--fail);
+      border: 1px solid var(--fail);
+    }
+
+    .test-duration {
+      margin-left: auto;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--text-dim);
+    }
+
+    .test-error {
+      margin-top: 6px;
+      margin-left: 32px;
+      padding: 8px 12px;
+      background: rgba(255, 51, 102, 0.08);
+      border-left: 3px solid var(--fail);
+      border-radius: 3px;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      color: #ff99b3;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .footer-summary {
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 0.85rem;
+      margin-top: 32px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="title-group">
+        <h1>PAC-MAN TEST HARNESS</h1>
+        <p>Automated verification suite for maze, movement, ghost AI, and score mechanics.</p>
+      </div>
+      <div class="stats-bar">
+        <div class="stat-badge">
+          <span class="stat-label">Total</span>
+          <span class="stat-val stat-total" id="stat-total">0</span>
+        </div>
+        <div class="stat-badge">
+          <span class="stat-label">Passed</span>
+          <span class="stat-val stat-pass" id="stat-pass">0</span>
+        </div>
+        <div class="stat-badge">
+          <span class="stat-label">Failed</span>
+          <span class="stat-val stat-fail" id="stat-fail">0</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="controls">
+      <button class="btn-run" onclick="runAllTests()">⚡ Run All Tests</button>
+    </div>
+
+    <div id="test-output"></div>
+
+    <div class="footer-summary" id="footer-summary">Ready to run tests.</div>
+  </div>
+
+  <!-- Flag for pacman.js so it doesn't auto-start the canvas game loop -->
+  <script>
+    window.__PACMAN_TEST_MODE__ = true;
+  </script>
+
+  <!-- Load dependencies & engine -->
+  <script src="screens.js"></script>
+  <script src="pacman.js"></script>
+
+  <!-- Micro Test Framework & Suites -->
+  <script>
+    // =========================================================================
+    // LIGHTWEIGHT TEST RUNNER & ASSERTION ENGINE
+    // =========================================================================
+
+    const suites = [];
+    let currentSuite = null;
+
+    function describe(suiteName, fn) {
+      currentSuite = { name: suiteName, tests: [] };
+      suites.push(currentSuite);
+      fn();
+      currentSuite = null;
+    }
+
+    function test(testName, fn) {
+      if (!currentSuite) throw new Error("test() must be inside a describe() block");
+      currentSuite.tests.push({ name: testName, fn });
+    }
+
+    const assert = {
+      ok(val, msg) {
+        if (!val) throw new Error(msg || `Expected truthy, got ${val}`);
+      },
+      strictEqual(actual, expected, msg) {
+        if (actual !== expected) {
+          throw new Error(msg || `Expected: ${JSON.stringify(expected)}\nReceived: ${JSON.stringify(actual)}`);
+        }
+      },
+      notStrictEqual(actual, expected, msg) {
+        if (actual === expected) {
+          throw new Error(msg || `Expected values not to strictly equal: ${actual}`);
+        }
+      },
+      deepStrictEqual(actual, expected, msg) {
+        const a = JSON.stringify(actual);
+        const b = JSON.stringify(expected);
+        if (a !== b) {
+          throw new Error(msg || `Deep equal mismatch:\nExpected: ${b}\nReceived: ${a}`);
+        }
+      },
+      closeTo(actual, expected, delta = 0.001, msg) {
+        if (Math.abs(actual - expected) > delta) {
+          throw new Error(msg || `Expected ${actual} to be close to ${expected} (within ±${delta})`);
+        }
+      }
+    };
+
+    // =========================================================================
+    // SUITE 1: MAZE ARCHITECTURE & TILE MECHANICS
+    // =========================================================================
+
+    describe("1. Maze Architecture & Tile Mechanics", () => {
+      const { Maze, GRID_COLS, GRID_ROWS, TILE_WALL, TILE_DOT, TILE_ENERGIZER, TILE_EMPTY, TILE_GATE } = window.PacmanEngine;
+
+      test("Maze initializes with authentic 28x31 dimensions", () => {
+        const maze = new Maze();
+        assert.strictEqual(maze.grid.length, 31, "Row count must be 31");
+        maze.grid.forEach((row, r) => {
+          assert.strictEqual(row.length, 28, `Row ${r} must have 28 columns`);
+        });
+      });
+
+      test("Authentic pellet count: exactly 240 regular dots + 4 energizers = 244 total", () => {
+        const maze = new Maze();
+        let regularDots = 0;
+        let energizers = 0;
+
+        for (let r = 0; r < GRID_ROWS; r++) {
+          for (let c = 0; c < GRID_COLS; c++) {
+            const tile = maze.getTile(c, r);
+            if (tile === TILE_DOT) regularDots++;
+            if (tile === TILE_ENERGIZER) energizers++;
+          }
+        }
+
+        assert.strictEqual(regularDots, 240, "Must contain exactly 240 regular dots");
+        assert.strictEqual(energizers, 4, "Must contain exactly 4 energizers");
+        assert.strictEqual(maze.totalDots, 244, "Total dots count in maze must be 244");
+        assert.strictEqual(maze.dotsRemaining, 244, "Initial dotsRemaining must equal totalDots");
+      });
+
+      test("Wall boundary collision detection correctly identifies walls", () => {
+        const maze = new Maze();
+        // Corners of the maze are walls
+        assert.strictEqual(maze.isWall(0, 0), true, "Top-left corner (0,0) must be a wall");
+        assert.strictEqual(maze.isWall(27, 0), true, "Top-right corner (27,0) must be a wall");
+        assert.strictEqual(maze.isWall(0, 30), true, "Bottom-left corner (0,30) must be a wall");
+        assert.strictEqual(maze.isWall(27, 30), true, "Bottom-right corner (27,30) must be a wall");
+      });
+
+      test("Passability rules: Pac-Man cannot enter walls or ghost gate", () => {
+        const maze = new Maze();
+        // Ghost gate is at row 12, cols 13 and 14
+        assert.strictEqual(maze.getTile(13, 12), TILE_GATE, "Tile (13,12) should be ghost gate");
+        assert.strictEqual(maze.isPassableForPacman(13, 12), false, "Ghost gate must NOT be passable for Pac-Man");
+        assert.strictEqual(maze.isPassableForPacman(0, 0), false, "Wall must NOT be passable for Pac-Man");
+
+        // Normal path tile (e.g. (1,1)) is passable
+        assert.strictEqual(maze.isPassableForPacman(1, 1), true, "Dot tile (1,1) must be passable for Pac-Man");
+      });
+
+      test("Warp tunnel passability: Row 14 is passable beyond maze horizontal boundaries", () => {
+        const maze = new Maze();
+        assert.strictEqual(maze.isPassableForPacman(-1, 14), true, "Row 14 left tunnel exit (-1, 14) is passable");
+        assert.strictEqual(maze.isPassableForPacman(28, 14), true, "Row 14 right tunnel exit (28, 14) is passable");
+        assert.strictEqual(maze.isPassableForPacman(-1, 10), false, "Out of bounds on other rows must NOT be passable");
+      });
+
+      test("Dot eating decrements dotsRemaining and changes tile to TILE_EMPTY", () => {
+        const maze = new Maze();
+        const initialDots = maze.dotsRemaining;
+
+        // Tile (1, 1) has a dot
+        assert.strictEqual(maze.getTile(1, 1), TILE_DOT);
+        const eaten = maze.eat(1, 1);
+        assert.strictEqual(eaten, TILE_DOT, "eat() must return TILE_DOT");
+        assert.strictEqual(maze.getTile(1, 1), TILE_EMPTY, "Tile must be empty after eating");
+        assert.strictEqual(maze.dotsRemaining, initialDots - 1, "dotsRemaining must decrease by 1");
+
+        // Eating again on empty tile does nothing
+        const eatenAgain = maze.eat(1, 1);
+        assert.strictEqual(eatenAgain, TILE_EMPTY, "Eating empty tile returns TILE_EMPTY");
+        assert.strictEqual(maze.dotsRemaining, initialDots - 1, "dotsRemaining should not change");
+      });
+    });
+
+    // =========================================================================
+    // SUITE 2: PAC-MAN ENTITY & MOVEMENT
+    // =========================================================================
+
+    describe("2. Pac-Man Entity & Movement", () => {
+      const { Pacman, Maze, DIR_LEFT, DIR_RIGHT, DIR_UP, DIR_DOWN, DIR_NONE, GRID_COLS } = window.PacmanEngine;
+
+      test("Pac-Man resets to authentic arcade spawn position (13.5, 23)", () => {
+        const pacman = new Pacman();
+        assert.strictEqual(pacman.x, 13.5, "Spawn X must be 13.5");
+        assert.strictEqual(pacman.y, 23.0, "Spawn Y must be 23.0");
+        assert.strictEqual(pacman.dir, DIR_LEFT, "Initial direction must be DIR_LEFT");
+        assert.strictEqual(pacman.isDying, false, "Should not be in dying state initially");
+      });
+
+      test("Pac-Man moves in current direction during update()", () => {
+        const pacman = new Pacman();
+        const maze = new Maze();
+        pacman.dir = DIR_LEFT;
+        const initialX = pacman.x;
+
+        pacman.update(0.1, maze);
+        assert.ok(pacman.x < initialX, `Expected X (${pacman.x}) to be less than initial X (${initialX})`);
+      });
+
+      test("Instant 180-degree reversal is applied immediately", () => {
+        const pacman = new Pacman();
+        const maze = new Maze();
+        pacman.dir = DIR_LEFT;
+
+        // Queue reverse direction
+        pacman.setNextDirection(DIR_RIGHT);
+        pacman.update(0.01, maze);
+
+        assert.strictEqual(pacman.dir, DIR_RIGHT, "Pac-Man must instantly reverse to DIR_RIGHT");
+        assert.strictEqual(pacman.nextDir, null, "nextDir must be cleared after applying");
+      });
+
+      test("Wall collision stops Pac-Man and rounds coordinates", () => {
+        const pacman = new Pacman();
+        const maze = new Maze();
+
+        // Place Pac-Man at (1, 1) facing left into outer wall (0, 1)
+        pacman.x = 1.05;
+        pacman.y = 1.0;
+        pacman.dir = DIR_LEFT;
+
+        // Outer wall (0, 1) is not passable
+        assert.strictEqual(maze.isPassableForPacman(0, 1), false);
+
+        pacman.update(0.1, maze);
+        assert.strictEqual(pacman.dir, DIR_NONE, "Pac-Man should stop upon hitting wall");
+        assert.strictEqual(pacman.x, 1.0, "Pac-Man X should snap to nearest integer on collision");
+      });
+
+      test("Cornering / Pre-turn buffer queues and turns at upcoming intersection", () => {
+        const pacman = new Pacman();
+        const maze = new Maze();
+
+        // Tile (6, 5) can turn UP into (6, 4)
+        // Position Pac-Man near intersection: x = 6.2, y = 5.0, moving LEFT
+        pacman.x = 6.2;
+        pacman.y = 5.0;
+        pacman.dir = DIR_LEFT;
+
+        assert.strictEqual(maze.isPassableForPacman(6, 4), true, "Turn UP at col 6 is passable");
+
+        // Buffer turn UP
+        pacman.setNextDirection(DIR_UP);
+        assert.strictEqual(pacman.dir, DIR_LEFT, "Direction should still be LEFT before reaching center");
+
+        // Advance into cornering window (< 0.38 distance from col 6)
+        pacman.update(0.02, maze); // 10.5 * 0.02 = 0.21 tiles move -> x approx 5.99
+
+        assert.strictEqual(pacman.dir, DIR_UP, "Direction must change to buffered DIR_UP at intersection");
+        assert.strictEqual(pacman.x, 6.0, "X position should align with intersection column center");
+      });
+
+      test("Warp tunnel wrap-around seamlessly teleports between edges", () => {
+        const pacman = new Pacman();
+        const maze = new Maze();
+
+        // In row 14, moving left through left boundary
+        pacman.y = 14.0;
+        pacman.x = -0.6;
+        pacman.dir = DIR_LEFT;
+
+        pacman.update(0.01, maze);
+        assert.closeTo(pacman.x, GRID_COLS - 0.5, 0.2, "Crossing left exit should warp to right tunnel");
+
+        // Moving right through right boundary
+        pacman.x = GRID_COLS - 0.4;
+        pacman.dir = DIR_RIGHT;
+
+        pacman.update(0.01, maze);
+        assert.closeTo(pacman.x, -0.5, 0.2, "Crossing right exit should warp to left tunnel");
+      });
+    });
+
+    // =========================================================================
+    // SUITE 3: GHOST AI PERSONALITIES & STATES
+    // =========================================================================
+
+    describe("3. Ghost AI Personalities & Modes", () => {
+      const {
+        Ghost, Pacman,
+        DIR_UP, DIR_DOWN, DIR_LEFT, DIR_RIGHT,
+        GHOST_STATE_SCATTER, GHOST_STATE_CHASE, GHOST_STATE_FRIGHTENED, GHOST_STATE_EATEN, GHOST_STATE_IN_HOUSE
+      } = window.PacmanEngine;
+
+      test("Four ghosts initialize with authentic arcade colors, targets, and release thresholds", () => {
+        const blinky = new Ghost('Blinky', '#ff0000', { x: 25, y: -2 }, { x: 13.5, y: 11.0 }, DIR_LEFT, 0);
+        const pinky  = new Ghost('Pinky',  '#ffb8de', { x:  2, y: -2 }, { x: 13.5, y: 14.0 }, DIR_UP,   0);
+        const inky   = new Ghost('Inky',   '#00ffff', { x: 27, y: 31 }, { x: 11.5, y: 14.0 }, DIR_UP,  30);
+        const clyde  = new Ghost('Clyde',  '#ffb847', { x:  0, y: 31 }, { x: 15.5, y: 14.0 }, DIR_UP,  60);
+
+        assert.strictEqual(blinky.state, GHOST_STATE_SCATTER, "Blinky starts immediately outside in SCATTER");
+        assert.strictEqual(pinky.state, GHOST_STATE_IN_HOUSE, "Pinky starts IN_HOUSE");
+        assert.strictEqual(inky.dotReleaseThreshold, 30, "Inky release threshold is 30 dots");
+        assert.strictEqual(clyde.dotReleaseThreshold, 60, "Clyde release threshold is 60 dots");
+      });
+
+      test("Blinky AI targeting: Directly chases Pac-Man's exact coordinates", () => {
+        const blinky = new Ghost('Blinky', '#ff0000', { x: 25, y: -2 }, { x: 13.5, y: 11.0 }, DIR_LEFT, 0);
+        blinky.state = GHOST_STATE_CHASE;
+
+        const pacman = new Pacman();
+        pacman.x = 9.0;
+        pacman.y = 15.0;
+
+        const target = blinky.getTarget(GHOST_STATE_CHASE, pacman, blinky);
+        assert.strictEqual(target.x, 9.0, "Blinky target X should match Pac-Man X");
+        assert.strictEqual(target.y, 15.0, "Blinky target Y should match Pac-Man Y");
+      });
+
+      test("Pinky AI targeting: Ambushes 4 tiles ahead of Pac-Man's direction", () => {
+        const pinky = new Ghost('Pinky', '#ffb8de', { x: 2, y: -2 }, { x: 13.5, y: 14.0 }, DIR_UP, 0);
+        pinky.state = GHOST_STATE_CHASE;
+
+        const pacman = new Pacman();
+        pacman.x = 10.0;
+        pacman.y = 20.0;
+        pacman.dir = DIR_RIGHT; // dir.x = 1, dir.y = 0
+
+        const target = pinky.getTarget(GHOST_STATE_CHASE, pacman, null);
+        assert.strictEqual(target.x, 14.0, "Pinky targets Pac-Man X + 4*dir.x (10 + 4 = 14)");
+        assert.strictEqual(target.y, 20.0, "Pinky targets Pac-Man Y + 4*dir.y (20 + 0 = 20)");
+      });
+
+      test("Clyde AI targeting: Chases when far (> 8 tiles), retreats to corner when near (<= 8 tiles)", () => {
+        const clyde = new Ghost('Clyde', '#ffb847', { x: 0, y: 31 }, { x: 15.5, y: 14.0 }, DIR_UP, 60);
+        clyde.state = GHOST_STATE_CHASE;
+        clyde.x = 10.0;
+        clyde.y = 10.0;
+
+        const pacman = new Pacman();
+
+        // Far away: distance = 15 tiles
+        pacman.x = 25.0;
+        pacman.y = 10.0;
+        let target = clyde.getTarget(GHOST_STATE_CHASE, pacman, null);
+        assert.strictEqual(target.x, 25.0, "When far away, Clyde targets Pac-Man directly");
+        assert.strictEqual(target.y, 10.0);
+
+        // Close: distance = 4 tiles (<= 8)
+        pacman.x = 14.0;
+        pacman.y = 10.0;
+        target = clyde.getTarget(GHOST_STATE_CHASE, pacman, null);
+        assert.strictEqual(target.x, 0, "When within 8 tiles, Clyde retreats to scatterTarget X (0)");
+        assert.strictEqual(target.y, 31, "When within 8 tiles, Clyde retreats to scatterTarget Y (31)");
+      });
+
+      test("Frightened mode: Inverts direction, sets timer, and slows speed", () => {
+        const ghost = new Ghost('Blinky', '#ff0000', { x: 25, y: -2 }, { x: 13.5, y: 11.0 }, DIR_LEFT, 0);
+        ghost.state = GHOST_STATE_CHASE;
+        ghost.dir = DIR_LEFT;
+
+        ghost.makeFrightened(7.0);
+
+        assert.strictEqual(ghost.state, GHOST_STATE_FRIGHTENED, "Ghost state must be FRIGHTENED");
+        assert.strictEqual(ghost.dir, DIR_RIGHT, "Ghost must reverse direction on frightened trigger");
+        assert.strictEqual(ghost.frightenedTimer, 7.0, "Frightened timer must be initialized");
+      });
+    });
+
+    // =========================================================================
+    // SUITE 4: SCORING, MULTIPLIERS & STATE RULES
+    // =========================================================================
+
+    describe("4. Scoring, Combos & Life Logic", () => {
+      const { Game, STATE_PLAYING, STATE_READY } = window.PacmanEngine;
+
+      test("Game initializes with clean starting score, 3 lives, level 1", () => {
+        const game = new Game({ headless: true });
+        assert.strictEqual(game.score, 0, "Initial score should be 0");
+        assert.strictEqual(game.lives, 3, "Initial lives should be 3");
+        assert.strictEqual(game.level, 1, "Initial level should be 1");
+      });
+
+      test("Eating dots increases score and updates high score", () => {
+        const game = new Game({ headless: true });
+        game.startNewGame();
+
+        game.addScore(10);
+        assert.strictEqual(game.score, 10, "Score should be 10 after eating a dot");
+        assert.ok(game.highScore >= 10, "High score should be at least current score");
+
+        game.addScore(50);
+        assert.strictEqual(game.score, 60, "Score should be 60 after eating energizer");
+      });
+
+      test("Ghost eating combo multiplier doubles with each ghost: 200 -> 400 -> 800 -> 1600", () => {
+        const game = new Game({ headless: true });
+        game.startNewGame();
+
+        assert.strictEqual(game.ghostComboMultiplier, 200, "First ghost awards 200 points");
+        game.ghostComboMultiplier *= 2;
+        assert.strictEqual(game.ghostComboMultiplier, 400, "Second ghost awards 400 points");
+        game.ghostComboMultiplier *= 2;
+        assert.strictEqual(game.ghostComboMultiplier, 800, "Third ghost awards 800 points");
+        game.ghostComboMultiplier *= 2;
+        assert.strictEqual(game.ghostComboMultiplier, 1600, "Fourth ghost awards 1600 points");
+      });
+
+      test("Extra life awarded when reaching 10,000 points (once only)", () => {
+        const game = new Game({ headless: true });
+        game.startNewGame();
+        const initialLives = game.lives;
+
+        // Add 9,990 points -> no extra life
+        game.addScore(9990);
+        assert.strictEqual(game.lives, initialLives, "Lives should remain unchanged under 10k points");
+
+        // Add 20 points -> crosses 10,000 threshold
+        game.addScore(20);
+        assert.strictEqual(game.lives, initialLives + 1, "Extra life should be awarded at >= 10,000 points");
+        assert.strictEqual(game.extraLifeAwarded, true, "extraLifeAwarded flag should be true");
+
+        // Add more points -> should NOT award another life
+        game.addScore(5000);
+        assert.strictEqual(game.lives, initialLives + 1, "Should not grant multiple extra lives from same threshold");
+      });
+
+      test("Ready state countdown transitions into PLAYING state", () => {
+        const game = new Game({ headless: true });
+        game.startNewGame();
+
+        assert.strictEqual(game.state, STATE_READY, "New game starts in READY state");
+        assert.ok(game.readyTimer > 0, "Ready timer should be positive");
+
+        // Simulate 4 seconds passing (ready timer is 3.5s)
+        game.update(4.0);
+        assert.strictEqual(game.state, STATE_PLAYING, "Game should transition to PLAYING once ready timer expires");
+      });
+    });
+
+    // =========================================================================
+    // TEST RUNNER IMPLEMENTATION
+    // =========================================================================
+
+    function runAllTests() {
+      const outputEl = document.getElementById('test-output');
+      outputEl.innerHTML = '';
+
+      let total = 0;
+      let passed = 0;
+      let failed = 0;
+      const testResults = [];
+
+      suites.forEach((suite, sIdx) => {
+        const suiteEl = document.createElement('div');
+        suiteEl.className = 'suite';
+
+        const suiteHeader = document.createElement('div');
+        suiteHeader.className = 'suite-header';
+        suiteHeader.innerHTML = `<span class="suite-title">${suite.name}</span>`;
+        suiteEl.appendChild(suiteHeader);
+
+        const listEl = document.createElement('ul');
+        listEl.className = 'test-list';
+
+        suite.tests.forEach((t) => {
+          total++;
+          const start = performance.now();
+          let pass = false;
+          let errorMsg = null;
+
+          try {
+            t.fn();
+            pass = true;
+            passed++;
+          } catch (err) {
+            failed++;
+            errorMsg = err.message || String(err);
+          }
+          const duration = (performance.now() - start).toFixed(2);
+
+          testResults.push({
+            suite: suite.name,
+            name: t.name,
+            pass,
+            durationMs: parseFloat(duration),
+            error: errorMsg
+          });
+
+          const itemEl = document.createElement('li');
+          itemEl.className = 'test-item';
+          itemEl.innerHTML = `
+            <div class="test-main">
+              <span class="test-status ${pass ? 'status-pass' : 'status-fail'}">${pass ? 'PASS' : 'FAIL'}</span>
+              <span class="test-name">${t.name}</span>
+              <span class="test-duration">${duration}ms</span>
+            </div>
+            ${errorMsg ? `<div class="test-error">${errorMsg}</div>` : ''}
+          `;
+          listEl.appendChild(itemEl);
+        });
+
+        suiteEl.appendChild(listEl);
+        outputEl.appendChild(suiteEl);
+      });
+
+      // Update Header Stats
+      document.getElementById('stat-total').textContent = total;
+      document.getElementById('stat-pass').textContent = passed;
+      document.getElementById('stat-fail').textContent = failed;
+
+      const summaryText = failed === 0 
+        ? `✅ All ${total} tests passed successfully!` 
+        : `⚠️ ${failed} of ${total} tests failed.`;
+      document.getElementById('footer-summary').textContent = summaryText;
+
+      // Expose to window for automated agent inspection
+      window.__TEST_RESULTS__ = {
+        total,
+        passed,
+        failed,
+        allPassed: failed === 0,
+        tests: testResults
+      };
+    }
+
+    // Auto-run on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      runAllTests();
+    });
+  </script>
+</body>
+</html>

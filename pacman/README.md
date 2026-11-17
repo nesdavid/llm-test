@@ -43,6 +43,7 @@ pacman/
 ├── style.css      # Retro arcade styling, CRT overlay, glowing neon themes, and responsive design
 ├── screens.js     # Screen & modal manager (Start, Pause, Game Over, Level Clear, HUD)
 ├── pacman.js      # Game engine, ghost AI, map rendering, Web Audio synthesis, and state machine
+├── tests.html     # Automated unit & integration test harness and test runner
 └── README.md      # Game documentation and architecture guide
 ```
 
@@ -50,4 +51,5 @@ pacman/
 
 ## 🚀 How to Run
 
-Simply open `pacman/index.html` in any modern web browser (Google Chrome, Microsoft Edge, Firefox, Safari). No web server or build step is required!
+* **Play Game**: Simply open `pacman/index.html` in any modern web browser.
+* **Run Test Harness**: Open `pacman/tests.html` in any web browser to run the automated unit and integration suites. No build step or dependencies required!
